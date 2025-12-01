@@ -47,10 +47,10 @@ app.post("/app/login", async (req, res) => {
             }
 
             const sql = `
-                SELECT E.*, U.ID AS ID_USU
+                SELECT E.*, U.ID_USU AS ID_USU
                 FROM USUARIO U
-                JOIN EMPRESA E ON U.EMPRESA_ID = E.ID
-                WHERE U.NOME = ? AND U.SENHA = ?
+                JOIN EMPRESA E ON U.ID_EMP = E.ID_EMP
+                WHERE U.LOGIN = ? AND U.SENHA = ?
             `;
 
             db.query(sql, [LOGIN, SENHA], (err, result) => {
@@ -67,7 +67,7 @@ app.post("/app/login", async (req, res) => {
                 const empresa = result[0];                
 
                 const urlTrust = empresa.URL_TRUST || null;
-                const token = jwt.sign({ empresaId: empresa.ID }, JWT_SECRET, {
+                const token = jwt.sign({ empresaId: empresa.ID_EMP }, JWT_SECRET, {
                     expiresIn: "1h",
                 });
 
@@ -75,8 +75,8 @@ app.post("/app/login", async (req, res) => {
                 res.json({
                     token,
                     empresa: {
-                        id: empresa.ID,
-                        nome: empresa.NOME_EMP,
+                        id: empresa.ID_EMP,
+                        nome: empresa.NM_EMP,
                     },
                     urlTrust,
                 });

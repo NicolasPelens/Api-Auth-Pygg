@@ -3,7 +3,7 @@ import firebird from "node-firebird";
 const options = {
   host: "localhost",
   port: 3050,
-  database: "C:/Users/Padrao/Desktop/testeauth.fdb",
+  database: "C:/Users/Padrao/Desktop/AuthPygg.fdb",
   user: "SYSDBA",
   password: "vancotovo",
   lowercase_keys: false,
