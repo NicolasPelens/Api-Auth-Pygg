@@ -12,9 +12,9 @@ app.use(cors({
         "https://incatex.pygg.com.br",
         "http://localhost:5173",
         "http://127.0.0.1:5500"
-      ],
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
-  }));
+}));
 
 app.use(express.json());
 
@@ -64,7 +64,7 @@ app.post("/app/login", async (req, res) => {
                 if (!result || result.length === 0) {
                     return res.status(401).json({ error: "Usuário ou senha inválidos" });
                 }
-                const empresa = result[0];                
+                const empresa = result[0];
 
                 const urlTrust = empresa.URL_TRUST || null;
                 const token = jwt.sign({ empresaId: empresa.ID_EMP }, JWT_SECRET, {
@@ -88,6 +88,190 @@ app.post("/app/login", async (req, res) => {
             .status(500)
             .json({ error: "Erro no servidor (captcha ou banco)" });
     }
+});
+
+app.get("/get/usuario", (req, res) => {
+
+    const SQL_GET_USERS = "SELECT ID_USU, NM_USU, LOGIN, SENHA, NM_EMP FROM USUARIO JOIN EMPRESA ON USUARIO.ID_EMP = EMPRESA.ID_EMP ORDER BY ID_USU"; 
+
+    withConnection((err, db) => {
+
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return;
+        }
+        db.query(SQL_GET_USERS, (err, result) => {
+            db.detach();
+            if (err) {
+                console.error("Erro ao buscar dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+            return res.json({ users: result });
+        });
+    });
+});
+
+app.get("/get/empresa", (req, res) => {
+
+    const SQL_GET_USERS = "SELECT * FROM EMPRESA";
+
+    withConnection((err, db) => {
+
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return;
+        }
+        db.query(SQL_GET_USERS, (err, result) => {
+            db.detach();
+            if (err) {
+                console.error("Erro ao buscar dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+            return res.json({ empresas: result });
+        });
+    });
+});
+
+app.post("/insert/usuario", (req, res) => {
+
+    const SQL_INSERT_USUARIO = "INSERT INTO USUARIO (NM_USU, LOGIN, SENHA, ID_EMP) VALUES (?, ?, ?, ?)";
+    const { nm_usu, login, senha, id_emp } = req.body;
+
+    withConnection((err, db) => {
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return res.status(500).json({ error: "Erro ao conectar ao banco" });
+        }
+
+        db.query(SQL_INSERT_USUARIO, [nm_usu, login, senha, id_emp], (err, result) => {
+            db.detach();
+
+            if (err) {
+                console.error("Erro ao inserir dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+
+            return res.json({ message: "Usuário inserido com sucesso!", usuario: result });
+        });
+    });
+});
+
+app.post("/insert/empresa", (req, res) => {
+
+    const SQL_INSERT_EMPRESA = "INSERT INTO EMPRESA (NM_EMP, URL_TRUST) VALUES (?, ?)";
+    const { nm_emp, url_trust } = req.body;
+
+    withConnection((err, db) => {
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return res.status(500).json({ error: "Erro ao conectar ao banco" });
+        }
+
+        db.query(SQL_INSERT_EMPRESA, [nm_emp, url_trust], (err, result) => {
+            db.detach();
+
+            if (err) {
+                console.error("Erro ao inserir dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+
+            return res.json({ message: "Empresa inserido com sucesso!", usuario: result });
+        });
+    });
+});
+
+app.delete("/delete/usuario/:id", (req, res) => {
+    const SQL_DELETE_USUARIO = "DELETE FROM USUARIO WHERE ID_USU = ?";
+    const { id } = req.params;
+
+    withConnection((err, db) => {
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return res.status(500).json({ error: "Erro ao conectar ao banco" });
+        }
+
+        db.query(SQL_DELETE_USUARIO, [id], (err, result) => {
+            db.detach();
+
+            if (err) {
+                console.error("Erro ao deletar dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+
+            return res.json({ message: "Usuário deletado com sucesso!" });
+        });
+    });
+})
+
+app.delete("/delete/empresa/:id", (req, res) => {
+    const SQL_DELETE_EMPRESA = "DELETE FROM EMPRESA WHERE ID_EMP = ?";
+    const { id } = req.params;
+
+    withConnection((err, db) => {
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return res.status(500).json({ error: "Erro ao conectar ao banco" });
+        }
+
+        db.query(SQL_DELETE_EMPRESA, [id], (err, result) => {
+            db.detach();
+
+            if (err) {
+                console.error("Erro ao deletar dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+
+            return res.json({ message: "Empresa deletada com sucesso!" });
+        });
+    });
+})
+
+app.put("/update/usuario/:id", (req, res) => {
+    const SQL_UPDATE_USUARIO = "UPDATE USUARIO SET NM_USU = ?, LOGIN = ?, SENHA = ?, ID_EMP = ? WHERE ID_USU = ?";
+    const { id } = req.params;
+    const { nm_usu, login, senha, id_emp } = req.body;
+
+    withConnection((err, db) => {
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return res.status(500).json({ error: "Erro ao conectar ao banco" });
+        }
+
+        db.query(SQL_UPDATE_USUARIO, [nm_usu, login, senha, id_emp, id], (err, result) => {
+            db.detach();
+
+            if (err) {
+                console.error("Erro ao atualizar dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+
+            return res.json({ message: "Usuário atualizado com sucesso!" });
+        });
+    });
+});
+
+app.put("/update/empresa/:id", (req, res) => {
+    const SQL_UPDATE_EMPRESA = "UPDATE EMPRESA SET NM_EMP = ?, URL_TRUST = ? WHERE ID_EMP = ?";
+    const { id } = req.params;
+    const { nm_emp, url_trust } = req.body;
+
+    withConnection((err, db) => {
+        if (err) {
+            console.error("❌ Erro ao conectar ao Firebird:", err);
+            return res.status(500).json({ error: "Erro ao conectar ao banco" });
+        }
+
+        db.query(SQL_UPDATE_EMPRESA, [nm_emp, url_trust, id], (err, result) => {
+            db.detach();
+
+            if (err) {
+                console.error("Erro ao atualizar dados:", err);
+                return res.status(500).json({ error: "Erro no servidor" });
+            }
+
+            return res.json({ message: "Empresa atualizada com sucesso!" });
+        });
+    });
 });
 
 app.listen(3001, () =>
